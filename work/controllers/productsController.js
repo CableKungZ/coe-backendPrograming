@@ -1,30 +1,27 @@
 const passport = require("passport");
 const express = require("express")
 const mongoDbInstance = require("../db/mongoDb");
-const { ObjectId } = require("mongodb");
-
+const { ObjectId } = require('mongodb');
 const router = express.Router();
 
 const client = mongoDbInstance.getMongoClient();
 const db = client.db(mongoDbInstance.getDbName());
 
-const collectionname = "products";
-const checkUser = passport.authenticate("jwt-verify", { session: false });
+const collectionName = "products";
+const jwtAuth = passport.authenticate("jwt-verify", { session: false });
 
+const middleware = require("../middlewares/userRole")
+const validator = require("../validator/prod");
+const { validationResult } = require("express-validator");
 
 router.get(
     "/",
-    checkUser,
+    jwtAuth,
+    middleware.UserOrAdmin,
     async (req,res) => {
         await client.connect();
         const db = client.db(mongoDbInstance.getDbName());
-        const collection = db.collection(collectionname);
-
-        if (req.user.role !== "admin") {
-            return res.status(403).send({
-              message: "Forbidden: Admin role required."
-            });
-          }
+        const collection = db.collection(collectionName);
 
         const products = await collection.find({}).toArray();
 
@@ -35,17 +32,15 @@ router.get(
     }
 );
 
-router.get("/:id",checkUser,async (req,res) => {
+router.get("/:id",
+  jwtAuth,
+  middleware.UserOrAdmin,
+  async (req,res) => {
     const id = req.params.id;
-if (req.user.role !== "admin") {
-            return res.status(403).send({
-              message: "Forbidden: Admin role required."
-            });
-          }
-    
+
     await client.connect();
     const db = client.db(mongoDbInstance.getDbName());
-    const collection = db.collection(collectionname);
+    const collection = db.collection(collectionName);
 
     const product = await collection.find({
         _id : new ObjectId(id)
@@ -62,11 +57,14 @@ if (req.user.role !== "admin") {
 
 // TASK 4 SHOW ITEMS BY CATEGORY ID
 
-router.get("/cate/:id",checkUser,async (req,res) => {
+router.get("/cate/:id",
+  jwtAuth,
+  middleware.UserOrAdmin,
+  async (req,res) => {
     const category = req.params.id;
     await client.connect();
     const db = client.db(mongoDbInstance.getDbName());
-    const collection = db.collection(collectionname);
+    const collection = db.collection(collectionName);
 
     const product = await collection.find({
         category : category
@@ -81,25 +79,28 @@ router.get("/cate/:id",checkUser,async (req,res) => {
 })
 
 // Task 3
-router.post("/add", checkUser, async (req, res) => {
+router.post("/add", 
+  jwtAuth, 
+  middleware.isAdmin,
+  validator.createProduct,
+  async (req, res) => {
     try {
-        if (req.user.role !== "admin") {
-            return res.status(403).send({
-              message: "Forbidden: Admin role required."
-            });
-          }
 
       const { name, price, category } = req.body;
   
-      if (!name || !price || !category) {
-        return res.status(400).send({
-          message: "All fields (name, price, category) are required.",
-        });
+      const errorResult = validationResult(req);
+
+      if(!errorResult.isEmpty()){
+           return res.status(400).send({
+            message: "Validation error",
+            errors: errorResult.array(),
+          });
       }
+  
   
       await client.connect();
   
-      const db = client.db(mongoDbInstant.getDbName());
+      const db = client.db(mongoDbInstance.getDbName());
       const collection = db.collection("products");
   
       const result = await collection.insertOne({ name, price, category });
@@ -111,7 +112,7 @@ router.post("/add", checkUser, async (req, res) => {
     } catch (error) {
       return res.status(500).send({
         message: "Error adding product.",
-        error,
+        error: error.message || error,
       });
     } finally {
       await client.close();
@@ -119,54 +120,57 @@ router.post("/add", checkUser, async (req, res) => {
   });
 
 // Task 4
-router.put("/edit/:id", checkUser, async (req, res) => {
+router.put("/edit/:id", 
+  jwtAuth,
+  middleware.isAdmin,
+  validator.updateProduct,
+  async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-        return res.status(403).send({
-          message: "Forbidden: Admin role required."
-        });
-      }
 
     const { id } = req.params;
-    const { username, full_name, role } = req.body;
+    const { name, price, category } = req.body;
 
-    if (!mongoDbInstant.ObjectId.isValid(id)) {
-      return res.status(400).send({
-        message: "Invalid ID format",
-      });
+    const errorResult = validationResult(req);
+
+    if(!errorResult.isEmpty()){
+         return res.status(400).send({
+          message: "Validation error",
+          errors: errorResult.array(),
+        });
     }
+
 
     await client.connect();
 
-    const db = client.db(mongoDbInstant.getDbName());
+    const db = client.db(mongoDbInstance.getDbName());
     const collection = db.collection(collectionName);
 
     const updatedUser = await collection.updateOne(
-      { _id: new mongoDbInstant.ObjectId(id) },
-      { $set: { username, full_name, role } }
+      { _id: new ObjectId(id) }, 
+      { $set: { name, price, category } }
     );
 
     if (updatedUser.matchedCount === 0) {
       return res.status(404).send({
-        message: "User not found",
+        message: "Product not found",
       });
     }
 
     return res.status(200).send({
-      message: "User updated successfully",
+      message: "Product updated successfully",
       updatedUser,
     });
   } catch (error) {
     return res.status(500).send({
-      message: "Error updating user",
-      error,
+      message: "Error updating Product",
+      error: error.message || error,
     });
   } finally {
     await client.close();
   }
 });
 // Task 5 
-router.delete("/delete/:id", checkUser, async (req, res) => {
+router.delete("/delete/:id", jwtAuth, async (req, res) => {
     try {
         if (req.user.role !== "admin") {
             return res.status(403).send({
@@ -176,7 +180,7 @@ router.delete("/delete/:id", checkUser, async (req, res) => {
   
       const { id } = req.params;
   
-      if (!mongoDbInstant.ObjectId.isValid(id)) {
+      if (!mongoDbInstance.ObjectId.isValid(id)) {
         return res.status(400).send({
           message: "Invalid ID format",
         });
@@ -184,10 +188,10 @@ router.delete("/delete/:id", checkUser, async (req, res) => {
   
       await client.connect();
   
-      const db = client.db(mongoDbInstant.getDbName());
+      const db = client.db(mongoDbInstance.getDbName());
       const collection = db.collection(collectionName);
   
-      const deletedUser = await collection.deleteOne({ _id: new mongoDbInstant.ObjectId(id) });
+      const deletedUser = await collection.deleteOne({ _id: new mongoDbInstance.ObjectId(id) });
   
       if (deletedUser.deletedCount === 0) {
         return res.status(404).send({

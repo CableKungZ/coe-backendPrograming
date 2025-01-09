@@ -2,10 +2,12 @@ const passport = require("passport");
 const express = require("express");
 const bcrypt = require("bcrypt");
 const mongoDbInstant = require("../db/mongoDb");
+
 const middleware = require("../middlewares/userRole")
 const validator = require("../validator/user");
 const { validationResult } = require("express-validator");
 
+const { ObjectId } = require('mongodb');
 const router = express();
 const client = mongoDbInstant.getMongoClient();
 const collectionName = "users";
@@ -13,11 +15,10 @@ const collectionName = "users";
 const saltRounds = 10;
 const jwtAuth = passport.authenticate("jwt-verify", { session: false });
 
-// Get all users
+// Get all users only admin
 router.get("/",
   jwtAuth,
   middleware.isAdmin,
-  validator.createUser,
   async (req, res) => {
   try {
     const errorResult = validationResult(req);
@@ -51,7 +52,11 @@ router.get("/",
 });
 
 // Add user
-router.post("/add", async (req, res) => {
+router.post("/add",
+  jwtAuth,
+  middleware.isAdmin,
+  validator.createUser,
+  async (req, res) => {
   try {
     const { username, password, full_name, role } = req.body;
 
@@ -93,16 +98,30 @@ router.post("/add", async (req, res) => {
 });
 
 // Update user
-router.put("/update/:id", jwtAuth, async (req, res) => {
+router.put("/update/:id", 
+  jwtAuth,
+  middleware.isAdmin,
+  validator.updateUser,
+  async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
+/*     if (req.user.role !== "admin") {
       return res.status(403).send({
         message: "Forbidden: Admin role required."
       });
-    }
+    } */
 
     const { id } = req.params;
     const { username, full_name, role } = req.body;
+
+    const errorResult = validationResult(req);
+
+    if(!errorResult.isEmpty()){
+         return res.status(400).send({
+          message: "Validation error",
+          errors: errorResult.array(),
+        });
+    }
+
 
     await client.connect();
 
@@ -110,7 +129,7 @@ router.put("/update/:id", jwtAuth, async (req, res) => {
     const collection = db.collection(collectionName);
 
     const updatedUser = await collection.updateOne(
-      { _id: new mongoDbInstant.ObjectId(id) },
+      { _id: new ObjectId(id) }, 
       { $set: { username, full_name, role } }
     );
 
@@ -124,12 +143,17 @@ router.put("/update/:id", jwtAuth, async (req, res) => {
       message: "User updated successfully",
       updatedUser,
     });
-  } catch (error) {
-    return res.status(500).send({
-      message: "Error updating user",
-      error,
-    });
-  } finally {
+  } 
+    catch (error) {
+      console.error("Error updating user:", error);
+      return res.status(500).send({
+        message: "Error updating user",
+        error: error.message || error, // Include meaningful error information
+      });
+    }
+    
+
+finally {
     await client.close();
   }
 });
@@ -137,12 +161,12 @@ router.put("/update/:id", jwtAuth, async (req, res) => {
 // Delete user
 router.delete("/delete/:id", jwtAuth, async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
+/*     if (req.user.role !== "admin") {
       return res.status(403).send({
         message: "Forbidden: Admin role required."
       });
     }
-
+ */
     const { id } = req.params;
 
     await client.connect();

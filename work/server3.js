@@ -15,12 +15,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const productsController = require("./controllers/productsController");
 const usersController = require("./controllers/usersController");
 const authController = require("./controllers/authController");
+const categoriesController = require("./controllers/categoriesController");
 
 const port = 3001;
 
 app.use("/products", productsController);
 app.use("/users", usersController);
 app.use("/auth", authController);
+app.use("/cate", categoriesController);
 
 app.get("/", async (req, res) => {
   res.send({
