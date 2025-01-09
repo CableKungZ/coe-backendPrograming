@@ -14,28 +14,76 @@ app.use(upload.array());
 
 const port = 3001;
 
+const users = [
+    {
+        id: 1,
+        username: "user 1",
+    },
+    {
+        id: 2,
+        username : "user 2"
+    }
+]
+
 app.get(
     "/",
     (req,res) => {
         res.send({
-            status: "success",
-            name: "1",
-            data : [
-                username = "Hi",
-                password = "GG"
-            ]
+            message:"version1"
         });
+
     }
 );
 
-app.post(
+app.get(
     "/p",
     (req,res) => {
-        res.send({
-            status: "success",
-        });
+        res.send(users);
     }
 );
+
+app.get(
+    "/users",
+    (req,res) => {
+        res.send(users)
+    }
+)
+
+app.get(
+    "/user/:id",
+    (req,res) => {
+        const id = req.params.id;
+        const user = users.find(item => item.id == id)
+
+        res.send({
+            message:"successful",
+            data: user
+        })
+    }
+)
+
+app.post(
+    "/register",
+    (req,res) => {
+        const name = req.body.name;
+        const age = req.body.age;
+
+        users.push(
+            {
+                name,
+                age
+            }
+        )
+        res.send(/* {
+            name,
+            age
+        } */
+            "Created Successfully"
+       
+        )
+
+    }
+)
 
 app.post(
     "/login",
@@ -43,12 +91,17 @@ app.post(
         const username = req.body.username
         const password = req.body.password
 
-        res.send({
+        users.push(
+            {name,age}
+        )
+        res.send(/* {
             data: {
                 username,
                 password
             }
-        });
+           
+        } */
+    "Created Successfully");
     }
 );
 
