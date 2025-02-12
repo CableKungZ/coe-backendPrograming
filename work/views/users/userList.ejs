@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+</head>
+<body>
+
+    <%- include("../layout/header.ejs",{
+        headerTitle: title
+    }) %>
+
+    <content>
+        <%
+            users.forEach(user => {
+                %>
+                <h4><%= user.full_name %> (<%= user.username %>) </h4>
+                <%
+            });  
+        %>
+
+    </content>
+
+    <%- include("../layout/footer.ejs") %>
+
+</body>
+</html>

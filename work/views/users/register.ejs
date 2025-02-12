@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+  </head>
+  <body>
+    <%- include("../layout/header.ejs",{
+        headerTitle: title
+    }) %>
+    <content>
+      <h1>Register User</h1>
+
+      <form action="/users/create-user" method="POST">
+        <label for="full_name">Full Name</label>
+        <input type="text" name="full_name" id="full_name" required />
+
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username" required />
+
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" required />
+
+        <label for="role">Role</label>
+        <input type="text" name="role" id="role" required />
+
+        <button type="submit">Register</button>
+
+      </form>
+    </content>
+
+    <%- include("../layout/footer.ejs",{
+    }) %>
+  </body>
+</html>

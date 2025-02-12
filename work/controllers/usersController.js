@@ -6,6 +6,7 @@ const mongoDbInstant = require("../db/mongoDb");
 const middleware = require("../middlewares/userRole")
 const validator = require("../validator/user");
 const { validationResult } = require("express-validator");
+const UserModel = require("../models/userModel")
 
 const { ObjectId } = require('mongodb');
 const router = express();
@@ -14,6 +15,37 @@ const collectionName = "users";
 
 const saltRounds = 10;
 const jwtAuth = passport.authenticate("jwt-verify", { session: false });
+
+
+
+
+
+router.get("/page", async (req, res) => {
+  const users = await UserModel.findAll();
+
+  return res.render("users/userList", {
+    title: "User List 55555",
+    users: users,
+  });
+});
+
+
+router.get("/page-register", async (req, res) => {
+  return res.render("users/register",{title: "Hello User Register"});
+});
+
+router.post("/create-user", async (req, res) => {
+  const {username, password,full_name, role} = req.body;
+  
+  const result = await UserModel.create({username, password, full_name, role});
+
+  if(result.insertedId){
+    return res.redirect("/users/page");
+  }else{
+    return res.redirect("/users/page-register");
+  }
+
+});
 
 // Get all users only admin
 router.get("/",
