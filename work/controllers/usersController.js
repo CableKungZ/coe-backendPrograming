@@ -25,7 +25,7 @@ router.get("/",
 
     if(!errorResult.isEmpty()){
          return res.status(400).send({
-          message: "Validation error",
+          message: "Validation errorrrrr",
           errors: errorResult.array(),
         });
     }
