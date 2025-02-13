@@ -26,7 +26,7 @@ app.use("/cate", categoriesController);
 
 app.get("/", async (req, res) => {
   res.send({
-    message: "server is running way jajasd  hjj",
+    message: "server is running ",
     version: "1.0.1",
     secret: process.env.jwt_secret,
   });
