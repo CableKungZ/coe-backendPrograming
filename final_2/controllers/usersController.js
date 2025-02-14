@@ -7,6 +7,8 @@ const client = mongoDbInstant.getMongoClient();
 const collectionName = "users";
 const passport = require("passport");
 const middleware = require("../middlewares/userRole")
+const validator = require("../validator/user");
+const { validationResult } = require("express-validator");
 
 const saltRounds = 10;
 const jwtAuth = passport.authenticate("jwt-verify", { session: false });
@@ -38,6 +40,7 @@ router.get("/",
 router.post("/create", 
     jwtAuth,
     middleware.isAdmin,
+    validator.createUser,
     async (req, res) => {
     try {
         const { username, password, full_name, role } = req.body;
@@ -49,6 +52,17 @@ router.post("/create",
                 message: "User already exists",
             });
         }
+
+        const errorResult = validationResult(req);
+            
+        if(!errorResult.isEmpty()){
+             return res.status(400).send({
+              message: "Validation error",
+              errors: errorResult.array(),
+            });
+        }
+    
+
 
         const passwordHash = bcrypt.hashSync(password, saltRounds);
 
@@ -78,10 +92,22 @@ router.post("/create",
 router.put("/update/:id",
     jwtAuth,
     middleware.isAdmin,
+    validator.updateUser,
      async (req, res) => {
     try {
         const { id } = req.params;
         const { username, full_name, role } = req.body;
+
+        const errorResult = validationResult(req);
+            
+        if(!errorResult.isEmpty()){
+             return res.status(400).send({
+              message: "Validation error",
+              errors: errorResult.array(),
+            });
+        }
+    
+
 
         const collection = await getDbConnection();
 

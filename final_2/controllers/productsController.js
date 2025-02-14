@@ -9,6 +9,8 @@ const client = mongoDbInstant.getMongoClient();
 const collectionName = "prod";
 const middleware = require("../middlewares/userRole")
 const jwtAuth = passport.authenticate("jwt-verify", { session: false });
+const validator = require("../validator/prod");
+const { validationResult } = require("express-validator");
 
 async function getDbConnection() {
     await client.connect();
@@ -20,10 +22,21 @@ async function getDbConnection() {
 router.post("/add",
     jwtAuth,
     middleware.isAdmin,
+    validator.createProduct,
     async (req, res) => {
         try {
 
             const { name, amount } = req.body;
+
+            const errorResult = validationResult(req);
+
+            if (!errorResult.isEmpty()) {
+                return res.status(400).send({
+                    message: "Validation error",
+                    errors: errorResult.array(),
+                });
+            }
+
 
             await client.connect();
 
@@ -50,11 +63,22 @@ router.post("/add",
 router.put("/edit/:id",
     jwtAuth,
     middleware.isAdmin,
+    validator.updateProduct,
     async (req, res) => {
         try {
 
             const { id } = req.params;
             const { name, amount } = req.body;
+
+            const errorResult = validationResult(req);
+
+            if (!errorResult.isEmpty()) {
+                return res.status(400).send({
+                    message: "Validation error",
+                    errors: errorResult.array(),
+                });
+            }
+
 
             await client.connect();
 
@@ -86,23 +110,23 @@ router.put("/edit/:id",
         }
     });
 
-router.get("/products", 
-  jwtAuth,
+router.get("/products",
+    jwtAuth,
     middleware.UserOrAdmin,
     async (req, res) => {
-    try {
-        await client.connect();
-        const db = client.db(mongoDbInstant.getDbName());
-        const collection = db.collection(collectionName);
+        try {
+            await client.connect();
+            const db = client.db(mongoDbInstant.getDbName());
+            const collection = db.collection(collectionName);
 
-        const products = await collection.find().toArray();
-        res.send(products);
-    } catch (error) {
-        res.status(500).send({ message: "Error fetching products", error });
-    } finally {
-        await client.close();
-    }
-});
+            const products = await collection.find().toArray();
+            res.send(products);
+        } catch (error) {
+            res.status(500).send({ message: "Error fetching products", error });
+        } finally {
+            await client.close();
+        }
+    });
 
 // สามารถลบสินค้าในระบบได้ด้วย product id [admin]
 router.delete("/delete/:id",
@@ -138,10 +162,10 @@ router.delete("/delete/:id",
 router.post("/order", jwtAuth, middleware.isUser, async (req, res) => {
 
     try {
-            const userId = req.user._id;
-            console.log("Request received for placing order");
+        const userId = req.user._id;
+        console.log("Request received for placing order");
         const { productId, quantity } = req.body;
-        console.log("product ID : ", productId);middleware.isUser
+        console.log("product ID : ", productId); middleware.isUser
         console.log("quantity : ", quantity);
         console.log("userId", userId);
 
