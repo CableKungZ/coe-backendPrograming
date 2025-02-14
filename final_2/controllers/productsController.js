@@ -6,8 +6,11 @@ const router = express();
 const client = mongoDbInstant.getMongoClient();
 const collectionName = "prod";
 
+<<<<<<< Updated upstream
 const saltRounds = 10;
 //สามารถอ่านรายการสินค้าในระบบและแสดงจำนวนคงเหลือได้ [admin&user]
+=======
+>>>>>>> Stashed changes
 router.get("/",
     async (req, res) => {
     try {
