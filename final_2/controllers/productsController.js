@@ -145,6 +145,12 @@ router.post("/order", jwtAuth, middleware.isUser, async (req, res) => {
         console.log("quantity : ", quantity);
         console.log("userId", userId);
 
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+            console.log("Invalid quantity");
+            return res.status(400).send({ message: 'Quantity must be a positive integer.' });
+        }
+
+
         await client.connect();
         const db = client.db(mongoDbInstant.getDbName());
         const productCollection = db.collection("prod");
@@ -202,6 +208,7 @@ router.get("/orders",
             if (!userId) {
                 return res.status(400).send({ message: 'User ID is required from token.' });
             }
+
 
             console.log(`Fetching orders for userId: ${userId}`);
 
