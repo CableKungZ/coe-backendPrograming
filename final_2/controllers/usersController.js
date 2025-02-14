@@ -69,4 +69,40 @@ router.post("/create", async (req,res) => {
     }
 })
 
+router.put("/update/:id", async (req,res) => {
+    try {
+    const { id } = req.params;
+    const { username, full_name, role } = req.body;
+        
+    await client.connect();
+
+    const db = client.db(mongoDbInstant.getDbName());
+    const collection = db.collection(collectionName);
+
+    const updatedUser = await collection.updateOne(
+      { _id: new ObjectId(id) }, 
+      { $set: { username, full_name, role } }
+    );
+    if (updatedUser.matchedCount === 0) {
+        return res.status(404).send({
+          message: "User not found",
+        });
+      }
+      return res.status(200).send({
+        message: "User updated successfully",
+        updatedUser,
+      });
+
+    } catch (error) {
+        console.error("Error updating user:", error);
+        return res.status(500).send({
+          message: "Error updating user",
+          error: error.message || error, // Include meaningful error information
+        });
+    } finally {
+        await client.close();
+    }
+})
+
+
 module.exports = router;
