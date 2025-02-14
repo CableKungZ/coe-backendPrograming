@@ -6,6 +6,14 @@ const router = express();
 const client = mongoDbInstant.getMongoClient();
 const collectionName = "prod";
 
+
+async function getDbConnection() {
+    await client.connect();
+    const db = client.db(mongoDbInstant.getDbName());
+    return db.collection(collectionName);
+}
+
+
 router.get("/",
     async (req, res) => {
     try {
@@ -166,8 +174,84 @@ router.post("/add",
     }
   });
 
-  router
 
+
+router.post("/order", async (req, res) => {
+    try {
+        const { productId, quantity, userId } = req.body; 
+
+        if (!productId || !quantity || !userId) {
+            return res.status(400).send({ message: 'Product ID, quantity, and user ID are required.' });
+        }
+
+        await client.connect();
+        const db = client.db(mongoDbInstant.getDbName());
+        const productCollection = db.collection("prod");
+
+        const product = await productCollection.findOne({ _id: new ObjectId(productId) });
+
+        if (!product) {
+            return res.status(404).send({ message: 'Product not found.' });
+        }
+
+        if (product.amount < quantity) {
+            return res.status(400).send({ message: 'Not enough stock available.' });
+        }
+
+        const newAmount = product.amount - quantity;
+        await productCollection.updateOne(
+            { _id: new ObjectId(productId) },
+            { $set: { amount: newAmount } }
+        );
+
+        const ordersCollection = db.collection("orders");
+        const order = {
+            userId,
+            productId: new ObjectId(productId),
+            quantity,
+            totalPrice: product.price * quantity,
+            status: 'Pending',
+            createdAt: new Date(),
+        };
+
+        const result = await ordersCollection.insertOne(order);
+
+        return res.status(201).send({
+            message: 'Order placed successfully.',
+            orderId: result.insertedId,
+        });
+    } catch (error) {
+        return res.status(500).send({ message: 'Error placing order.', error });
+    } finally {
+        await client.close();
+    }
+});
+
+router.get("/orders/:id", async (req, res) => {
+    try {
+        const { id } = req.params; 
+
+        if (!userId) {
+            return res.status(400).send({ message: 'User ID is required.' });
+        }
+
+        await client.connect();
+        const db = client.db(mongoDbInstant.getDbName());
+        const ordersCollection = db.collection("orders");
+
+        const orders = await ordersCollection.find({ userId }).toArray();
+
+        if (!orders.length) {
+            return res.status(404).send({ message: 'No orders found for this user.' });
+        }
+
+        return res.status(200).send({ orders });
+    } catch (error) {
+        return res.status(500).send({ message: 'Error fetching orders.', error });
+    } finally {
+        await client.close();
+    }
+});
 module.exports = router;
 
   
