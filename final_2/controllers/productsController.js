@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoDbInstant = require("../db/mongoDb");
-
+const bcrypt = require("bcrypt"); 
 const { ObjectId } = require('mongodb');
 const router = express();
 const client = mongoDbInstant.getMongoClient();
@@ -28,9 +28,7 @@ router.get("/",
     }
   });
 
-router.get("")
 
-module.exports = router;
 //สามารถสร้าง product ได้ [admin]
 router.post("/add", 
   
@@ -39,14 +37,14 @@ router.post("/add",
 
       const { name, amount } = req.body;
   
-      const errorResult = validationResult(req);
+/*       const errorResult = validationResult(req);
 
       if(!errorResult.isEmpty()){
            return res.status(400).send({
             message: "Validation error",
             errors: errorResult.array(),
           });
-      }
+      } */
   
   
       await client.connect();
@@ -78,7 +76,7 @@ router.post("/add",
       const { id } = req.params;
       const { name, price, category } = req.body;
   
-      const errorResult = validationResult(req);
+/*       const errorResult = validationResult(req);
   
       if(!errorResult.isEmpty()){
            return res.status(400).send({
@@ -86,7 +84,7 @@ router.post("/add",
             errors: errorResult.array(),
           });
       }
-  
+   */
   
       await client.connect();
   
@@ -143,11 +141,6 @@ router.post("/add",
   
       const { id } = req.params;
   
-      if (!mongoDbInstance.ObjectId.isValid(id)) {
-        return res.status(400).send({
-          message: "Invalid ID format",
-        });
-      }
   
       await client.connect();
   
