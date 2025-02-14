@@ -5,8 +5,11 @@ const { ObjectId } = require('mongodb');
 const router = express();
 const client = mongoDbInstant.getMongoClient();
 const collectionName = "users";
+const passport = require("passport");
+const middleware = require("../middlewares/userRole")
 
 const saltRounds = 10;
+const jwtAuth = passport.authenticate("jwt-verify", { session: false });
 
 async function getDbConnection() {
     await client.connect();
@@ -14,7 +17,10 @@ async function getDbConnection() {
     return db.collection(collectionName);
 }
 
-router.get("/", async (req, res) => {
+router.get("/",
+  jwtAuth,
+  middleware.isAdmin,
+   async (req, res) => {
     try {
         const collection = await getDbConnection();
         const users = await collection.find().toArray();
@@ -28,8 +34,11 @@ router.get("/", async (req, res) => {
         await client.close();
     }
 });
-
-router.post("/create", async (req, res) => {
+//สามารถแก้ไขข้้อมูลสินค้าได้ด้วย product id [admin]
+router.post("/create", 
+    jwtAuth,
+    middleware.isAdmin,
+    async (req, res) => {
     try {
         const { username, password, full_name, role } = req.body;
         const collection = await getDbConnection();
@@ -65,8 +74,11 @@ router.post("/create", async (req, res) => {
         await client.close();
     }
 });
-
-router.put("/update/:id", async (req, res) => {
+//สามารถอ่านรายการสินค้าในระบบและแสดงจำนวนคงเหลือได้ [admin&user]
+router.put("/update/:id",
+    jwtAuth,
+    middleware.isAdmin,
+     async (req, res) => {
     try {
         const { id } = req.params;
         const { username, full_name, role } = req.body;
@@ -99,8 +111,11 @@ router.put("/update/:id", async (req, res) => {
         await client.close();
     }
 });
-
-router.delete("/delete/:id", async (req, res) => {
+//สามารถลบสินค้าในระบบได้ด้วย product id [admin]
+router.delete("/delete/:id",
+    jwtAuth,
+    middleware.isAdmin,
+     async (req, res) => {
     try {
         const { id } = req.params;
 
