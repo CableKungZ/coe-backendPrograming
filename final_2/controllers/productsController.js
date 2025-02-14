@@ -50,7 +50,7 @@ router.post("/add",
       const db = client.db(mongoDbInstant.getDbName());
       const collection = db.collection("products");
   
-      const result = await collection.insertOne({ name, price, category });
+      const result = await collection.insertOne({ name, amount });
   
       return res.status(201).send({
         message: "Product added successfully.",
