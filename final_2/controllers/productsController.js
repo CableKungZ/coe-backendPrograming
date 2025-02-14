@@ -86,7 +86,10 @@ router.put("/edit/:id",
         }
     });
 
-router.get("/products", async (req, res) => {
+router.get("/products", 
+  jwtAuth,
+    middleware.UserOrAdmin,
+    async (req, res) => {
     try {
         await client.connect();
         const db = client.db(mongoDbInstant.getDbName());
