@@ -6,11 +6,6 @@ const router = express();
 const client = mongoDbInstant.getMongoClient();
 const collectionName = "prod";
 
-<<<<<<< Updated upstream
-const saltRounds = 10;
-//สามารถอ่านรายการสินค้าในระบบและแสดงจำนวนคงเหลือได้ [admin&user]
-=======
->>>>>>> Stashed changes
 router.get("/",
     async (req, res) => {
     try {
@@ -52,7 +47,7 @@ router.post("/add",
   
       await client.connect();
   
-      const db = client.db(mongoDbInstance.getDbName());
+      const db = client.db(mongoDbInstant.getDbName());
       const collection = db.collection("products");
   
       const result = await collection.insertOne({ name, price, category });
@@ -91,7 +86,7 @@ router.post("/add",
   
       await client.connect();
   
-      const db = client.db(mongoDbInstance.getDbName());
+      const db = client.db(mongoDbInstant.getDbName());
       const collection = db.collection(collectionName);
   
       const updatedUser = await collection.updateOne(
@@ -119,7 +114,20 @@ router.post("/add",
     }
   });
 
-
+  router.get("/products", async (req, res) => {
+    try {
+      await client.connect();
+      const db = client.db(mongoDbInstant.getDbName());
+      const collection = db.collection(collectionName);
+  
+      const products = await collection.find().toArray();
+      res.send(products);
+    } catch (error) {
+      res.status(500).send({ message: "Error fetching products", error });
+    } finally {
+      await client.close();
+    }
+  });
 // สามารถลบสินค้าในระบบได้ด้วย product id [admin]
   router.delete("/delete/:id", async (req, res) => {
     try {
@@ -134,10 +142,10 @@ router.post("/add",
   
       await client.connect();
   
-      const db = client.db(mongoDbInstance.getDbName());
+      const db = client.db(mongoDbInstant.getDbName());
       const collection = db.collection(collectionName);
   
-      const deletedUser = await collection.deleteOne({ _id: new mongoDbInstance.ObjectId(id) });
+      const deletedUser = await collection.deleteOne({ _id: new mongoDbInstant.ObjectId(id) });
   
       if (deletedUser.deletedCount === 0) {
         return res.status(404).send({
