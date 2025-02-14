@@ -4,7 +4,7 @@ const mongoDbInstant = require("../db/mongoDb");
 const { ObjectId } = require('mongodb');
 const router = express();
 const client = mongoDbInstant.getMongoClient();
-const collectionName = "users";
+const collectionName = "prod";
 
 const saltRounds = 10;
 
@@ -27,5 +27,7 @@ router.get("/",
       await client.close();
     }
   });
+
+router.get("")
 
 module.exports = router;
