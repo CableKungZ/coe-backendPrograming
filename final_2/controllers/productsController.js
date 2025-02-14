@@ -37,7 +37,7 @@ router.post("/add",
   async (req, res) => {
     try {
 
-      const { name, price, category } = req.body;
+      const { name, amount } = req.body;
   
       const errorResult = validationResult(req);
 
