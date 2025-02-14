@@ -14,7 +14,7 @@ const isAdmin = (req,res,next) => {
 const isUser = (req,res,next) => {
     const user = req.user
     if(user.role == "user"){
-        next
+        next();
     }else{
         return res.status(403).send({
             message: "Forbidden: User role only."
