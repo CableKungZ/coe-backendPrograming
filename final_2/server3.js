@@ -1,6 +1,5 @@
 
 require("dotenv").config();
-require("./middlewares/auth");
 
 const express = require("express");
 const bodyParser = require("body-parser");

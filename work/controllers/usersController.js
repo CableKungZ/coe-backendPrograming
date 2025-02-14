@@ -15,26 +15,10 @@ const collectionName = "users";
 const saltRounds = 10;
 const jwtAuth = passport.authenticate("jwt-verify", { session: false });
 
-// Get all users only admin
 router.get("/",
-  jwtAuth,
-  middleware.isAdmin,
   async (req, res) => {
   try {
-    const errorResult = validationResult(req);
-
-    if(!errorResult.isEmpty()){
-         return res.status(400).send({
-          message: "Validation errorrrrr",
-          errors: errorResult.array(),
-        });
-    }
-
-
-    
-
     await client.connect();
-
     const db = client.db(mongoDbInstant.getDbName());
     const collection = db.collection(collectionName);
 
