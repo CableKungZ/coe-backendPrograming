@@ -7,7 +7,7 @@ const client = mongoDbInstant.getMongoClient();
 const collectionName = "prod";
 
 const saltRounds = 10;
-
+//สามารถอ่านรายการสินค้าในระบบและแสดงจำนวนคงเหลือได้ [admin&user]
 router.get("/",
     async (req, res) => {
     try {
@@ -118,20 +118,7 @@ router.post("/add",
     }
   });
 
-  router.get("/products", async (req, res) => {
-    try {
-      await client.connect();
-      const db = client.db(mongoDbInstant.getDbName());
-      const collection = db.collection(collectionName);
-  
-      const products = await collection.find().toArray();
-      res.send(products);
-    } catch (error) {
-      res.status(500).send({ message: "Error fetching products", error });
-    } finally {
-      await client.close();
-    }
-  });
+
 // สามารถลบสินค้าในระบบได้ด้วย product id [admin]
   router.delete("/delete/:id", async (req, res) => {
     try {
