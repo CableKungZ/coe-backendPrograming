@@ -118,5 +118,63 @@ router.post("/add",
     }
   });
 
+  router.get("/products", async (req, res) => {
+    try {
+      await client.connect();
+      const db = client.db(mongoDbInstant.getDbName());
+      const collection = db.collection(collectionName);
+  
+      const products = await collection.find().toArray();
+      res.send(products);
+    } catch (error) {
+      res.status(500).send({ message: "Error fetching products", error });
+    } finally {
+      await client.close();
+    }
+  });
+// สามารถลบสินค้าในระบบได้ด้วย product id [admin]
+  router.delete("/delete/:id", async (req, res) => {
+    try {
+        if (req.user.role !== "admin") {
+            return res.status(403).send({
+              message: "Forbidden: Admin role required."
+            });
+          }
+  
+      const { id } = req.params;
+  
+      if (!mongoDbInstance.ObjectId.isValid(id)) {
+        return res.status(400).send({
+          message: "Invalid ID format",
+        });
+      }
+  
+      await client.connect();
+  
+      const db = client.db(mongoDbInstance.getDbName());
+      const collection = db.collection(collectionName);
+  
+      const deletedUser = await collection.deleteOne({ _id: new mongoDbInstance.ObjectId(id) });
+  
+      if (deletedUser.deletedCount === 0) {
+        return res.status(404).send({
+          message: "User not found",
+        });
+      }
+  
+      return res.status(200).send({
+        message: "User deleted successfully",
+      });
+    } catch (error) {
+      return res.status(500).send({
+        message: "Error deleting user",
+        error,
+      });
+    } finally {
+      await client.close();
+    }
+  });
+
+module.exports = router;
 
   
