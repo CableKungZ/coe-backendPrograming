@@ -141,7 +141,7 @@ router.post("/order", jwtAuth, middleware.isUser, async (req, res) => {
             const userId = req.user._id;
             console.log("Request received for placing order");
         const { productId, quantity } = req.body;
-        console.log("product ID : ", productId);
+        console.log("product ID : ", productId);middleware.isUser
         console.log("quantity : ", quantity);
         console.log("userId", userId);
 
@@ -194,6 +194,7 @@ router.post("/order", jwtAuth, middleware.isUser, async (req, res) => {
 
 router.get("/orders",
     jwtAuth,
+    middleware.isUser,
     async (req, res) => {
         try {
             const userId = req.user._id;
