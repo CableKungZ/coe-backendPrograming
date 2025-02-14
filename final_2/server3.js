@@ -18,7 +18,7 @@ const authController =require("./controllers/authController")
 const port = 3001;
 
 app.use("/products", productsController);
-app.use("/products2", productsController);
+app.use("/products2", productsController2);
 app.use("/users", usersController);
 app.use("/auth", authController);
 
