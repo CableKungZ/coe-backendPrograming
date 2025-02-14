@@ -19,20 +19,10 @@ router.post("/add",
 
       const { name, amount } = req.body;
   
-/*       const errorResult = validationResult(req);
-
-      if(!errorResult.isEmpty()){
-           return res.status(400).send({
-            message: "Validation error",
-            errors: errorResult.array(),
-          });
-      } */
-  
-  
       await client.connect();
   
       const db = client.db(mongoDbInstant.getDbName());
-      const collection = db.collection("products");
+      const collection = db.collection(collectionName);
   
       const result = await collection.insertOne({ name, amount });
   
@@ -59,16 +49,6 @@ router.post("/add",
   
       const { id } = req.params;
       const { name, price, category } = req.body;
-  
-/*       const errorResult = validationResult(req);
-  
-      if(!errorResult.isEmpty()){
-           return res.status(400).send({
-            message: "Validation error",
-            errors: errorResult.array(),
-          });
-      }
-   */
   
       await client.connect();
   
@@ -114,7 +94,7 @@ router.post("/add",
       await client.close();
     }
   });
-  
+
 // สามารถลบสินค้าในระบบได้ด้วย product id [admin]
   router.delete("/delete/:id",
     jwtAuth,
@@ -156,8 +136,94 @@ router.post("/add",
     }
   });
 
+router.post("/order",
+    jwtAuth,
+    middleware.isAdmin,
+    async (req, res) => {
+        try {
+            const { productId, quantity } = req.body; 
+    
+            // User ID is fetched from the JWT token
+            const userId = req.user._id;
+    
+            if (!productId || !quantity) {
+                return res.status(400).send({ message: 'Product ID and quantity are required.' });
+            }
+    
+            await client.connect();
+            const db = client.db(mongoDbInstant.getDbName());
+            const productCollection = db.collection("prod");
+    
+            // Find product by ID
+            const product = await productCollection.findOne({ _id: new ObjectId(productId) });
+    
+            if (!product) {
+                return res.status(404).send({ message: 'Product not found.' });
+            }
+    
+            // Check if enough stock is available
+            if (product.amount < quantity) {
+                return res.status(400).send({ message: 'Not enough stock available.' });
+            }
+    
+            // Reduce stock
+            const newAmount = product.amount - quantity;
+            await productCollection.updateOne(
+                { _id: new ObjectId(productId) },
+                { $set: { amount: newAmount } }
+            );
+    
+            // Create an order for the user
+            const ordersCollection = db.collection("orders");
+            const order = {
+                userId,
+                productId: new ObjectId(productId),
+                quantity,
+                totalPrice: product.price * quantity,
+                status: 'Pending',
+                createdAt: new Date(),
+            };
+    
+            const result = await ordersCollection.insertOne(order);
+    
+            return res.status(201).send({
+                message: 'Order placed successfully.',
+                orderId: result.insertedId,
+            });
+        } catch (error) {
+            return res.status(500).send({ message: 'Error placing order.', error });
+        } finally {
+            await client.close();
+        }
+});
 
-  router
+router.get("/orders/:id", async (req, res) => {
+    try {
+        const { id } = req.params; 
+
+        if (!userId) {
+            return res.status(400).send({ message: 'User ID is required.' });
+        }
+
+        await client.connect();
+        const db = client.db(mongoDbInstant.getDbName());
+        const ordersCollection = db.collection("orders");
+
+        const orders = await ordersCollection.find({ userId }).toArray();
+
+        if (!orders.length) {
+            return res.status(404).send({ message: 'No orders found for this user.' });
+        }
+
+        return res.status(200).send({ orders });
+    } catch (error) {
+        return res.status(500).send({ message: 'Error fetching orders.', error });
+    } finally {
+        await client.close();
+    }
+});
+
+
 module.exports = router;
 
   
