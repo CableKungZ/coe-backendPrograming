@@ -1,35 +1,19 @@
 const express = require("express");
+const passport = require("passport");
 const mongoDbInstant = require("../db/mongoDb");
+
 const bcrypt = require("bcrypt"); 
 const { ObjectId } = require('mongodb');
 const router = express();
 const client = mongoDbInstant.getMongoClient();
 const collectionName = "prod";
-
-router.get("/",
-    async (req, res) => {
-    try {
-      await client.connect();
-      const db = client.db(mongoDbInstant.getDbName());
-      const collection = db.collection(collectionName);
-  
-      const users = await collection.find().toArray();
-  
-      return res.send(users);
-    } catch (error) {
-      return res.status(500).send({
-        message: "Error fetching users",
-        error,
-      });
-    } finally {
-      await client.close();
-    }
-  });
-
+const middleware = require("../middlewares/userRole")
+const jwtAuth = passport.authenticate("jwt-verify", { session: false });
 
 //สามารถสร้าง product ได้ [admin]
 router.post("/add", 
-  
+  jwtAuth,
+  middleware.isAdmin,
   async (req, res) => {
     try {
 
@@ -65,9 +49,11 @@ router.post("/add",
       await client.close();
     }
   });
+
   //สามารถแก้ไขข้้อมูลสินค้าได้ด้วย product id [admin]
   router.put("/edit/:id", 
-
+    jwtAuth,
+    middleware.isAdmin,
     async (req, res) => {
     try {
   
@@ -128,8 +114,12 @@ router.post("/add",
       await client.close();
     }
   });
+  
 // สามารถลบสินค้าในระบบได้ด้วย product id [admin]
-  router.delete("/delete/:id", async (req, res) => {
+  router.delete("/delete/:id",
+    jwtAuth,
+    middleware.isAdmin,
+     async (req, res) => {
     try {
         if (req.user.role !== "admin") {
             return res.status(403).send({
@@ -166,6 +156,8 @@ router.post("/add",
     }
   });
 
+
+  router
 module.exports = router;
 
   
