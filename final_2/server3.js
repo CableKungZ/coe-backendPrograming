@@ -1,5 +1,6 @@
 
 require("dotenv").config();
+require("./middlewares/auth");
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -11,11 +12,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const productsController = require("./controllers/productsController");
 const usersController = require("./controllers/usersController");
+const authController =require("./controllers/authController")
 
 const port = 3001;
 
 app.use("/products", productsController);
 app.use("/users", usersController);
+app.use("/auth", authController);
 
 
 app.get("/", async (req, res) => {
