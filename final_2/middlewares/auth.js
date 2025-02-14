@@ -8,8 +8,6 @@ const mongoDbInstant = require("../db/mongoDb");
 const client = mongoDbInstant.getMongoClient();
 const collectionName = "users";
 
-// import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
-
 const jwtOptions = {
   jwtFromRequest: extractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.jwt_secret,

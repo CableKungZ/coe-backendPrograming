@@ -48,7 +48,7 @@ router.post("/add",
     try {
   
       const { id } = req.params;
-      const { name, price, category } = req.body;
+      const { name, amount } = req.body;
   
       await client.connect();
   
@@ -57,7 +57,7 @@ router.post("/add",
   
       const updatedUser = await collection.updateOne(
         { _id: new ObjectId(id) }, 
-        { $set: { name, price, category } }
+        { $set: { name, amount } }
       );
   
       if (updatedUser.matchedCount === 0) {
@@ -138,7 +138,7 @@ router.post("/add",
 
 router.post("/order",
     jwtAuth,
-    middleware.isAdmin,
+    middleware.isUser,
     async (req, res) => {
         try {
             const { productId, quantity } = req.body; 

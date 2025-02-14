@@ -35,5 +35,6 @@ const UserOrAdmin = (req,res,next) => {
 
 module.exports = {
     isAdmin,
-    UserOrAdmin
+    UserOrAdmin,
+    isUser
 }
